@@ -110,8 +110,12 @@ class MtProtoSender:
             return
 
         message, remote_msg_id, remote_seq = self._decode_msg(body)
+        print('Processing message', remote_seq, ':', repr(bytes(message)))
         with BinaryReader(message) as reader:
             self._process_msg(remote_msg_id, remote_seq, reader, update_state)
+            left = message[reader.tell_position():]
+            if left:
+                print('(!) Buffer has left', left)
 
     # endregion
 
@@ -274,8 +278,10 @@ class MtProtoSender:
             # lost requests (i.e., ones from the previous connection session)
             try:
                 if not self._process_msg(inner_msg_id, sequence, reader, state):
+                    print('Container item was not handled properly, skipping to position', begin_position, '+', inner_len)
                     reader.set_position(begin_position + inner_len)
-            except:
+            except Exception as e:
+                print('Error handling container', e, 'skipping to position', begin_position, '+', inner_len)
                 # If any error is raised, something went wrong; skip the packet
                 reader.set_position(begin_position + inner_len)
                 raise
