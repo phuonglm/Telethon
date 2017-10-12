@@ -1,7 +1,7 @@
 import os
+import struct
 from datetime import datetime
 from io import BufferedReader, BytesIO
-from struct import unpack
 
 from ..errors import InvalidParameterError, TypeNotFoundError
 from ..tl.all_tlobjects import tlobjects
@@ -35,24 +35,25 @@ class BinaryReader:
 
     def read_int(self, signed=True):
         """Reads an integer (4 bytes) value"""
-        return int.from_bytes(self.read(4), byteorder='little', signed=signed)
+        return struct.unpack('<i' if signed else '<I', self.read(4))[0]
 
     def read_long(self, signed=True):
         """Reads a long integer (8 bytes) value"""
-        return int.from_bytes(self.read(8), byteorder='little', signed=signed)
+        return struct.unpack('<q' if signed else '<Q', self.read(8))[0]
 
     def read_float(self):
         """Reads a real floating point (4 bytes) value"""
-        return unpack('<f', self.read(4))[0]
+        return struct.unpack('<f', self.read(4))[0]
 
     def read_double(self):
         """Reads a real floating point (8 bytes) value"""
-        return unpack('<d', self.read(8))[0]
+        return struct.unpack('<d', self.read(8))[0]
 
     def read_large_int(self, bits, signed=True):
         """Reads a n-bits long integer value"""
         return int.from_bytes(
-            self.read(bits // 8), byteorder='little', signed=signed)
+            self.read(bits // 8), byteorder='little', signed=signed
+        )
 
     def read(self, length):
         """Read the given amount of bytes"""
@@ -137,6 +138,7 @@ class BinaryReader:
     def tgread_vector(self):
         """Reads a vector (a list) of Telegram objects"""
         if 0x1cb5c415 != self.read_int(signed=False):
+            self.seek(-4)  # Go back
             raise ValueError('Invalid constructor code, vector was expected')
 
         count = self.read_int()
