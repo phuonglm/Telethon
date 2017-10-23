@@ -204,7 +204,7 @@ class TelegramBareClient:
             self.disconnect()
             return self.connect(_sync_updates=_sync_updates)
 
-        except (RPCError, ConnectionError) as error:
+        except (RPCError, ConnectionError, ConnectionRefusedError) as error:
             # Probably errors from the previous session, ignore them
             self.disconnect()
             self._logger.debug(
