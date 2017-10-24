@@ -2,12 +2,14 @@ import logging
 import os
 import threading
 import warnings
+
 from datetime import timedelta, datetime
 from hashlib import md5
 from io import BytesIO
 from signal import signal, SIGINT, SIGTERM, SIGABRT
 from threading import Lock
 from time import sleep
+from socket import timeout
 
 from . import helpers as utils
 from .crypto import rsa, CdnDecrypter
@@ -204,7 +206,7 @@ class TelegramBareClient:
             self.disconnect()
             return self.connect(_sync_updates=_sync_updates)
 
-        except (RPCError, ConnectionError, ConnectionRefusedError) as error:
+        except (RPCError, ConnectionError, ConnectionRefusedError, timeout) as error:
             # Probably errors from the previous session, ignore them
             self.disconnect()
             self._logger.debug(
